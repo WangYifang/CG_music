@@ -13,7 +13,7 @@ var numberOfBars = 60;
 $(document).ready(function () {
     initialize();
     createBars();
-    loadModel();
+    // loadModel();
     setupAudioProcessing();
     getAudio();
     handleDrop();  
