@@ -1,32 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <html>
-  	<head>
-		<meta charset="UTF-8">
-		<title>Music3D</title>
-		<link href="css/style.css" type="text/css" rel="stylesheet"/>
 
-	</head>
-	
-	<body onload="draw();">
+<head>
+	<meta charset="UTF-8">
+	<title>Music3D</title>
+	<link href="css/style.css" type="text/css" rel="stylesheet" />
+
+</head>
+
+<body>
 	<!-- <body> -->
-		<label id="guide" style="position:fixed;color:white; margin:10px;">Drag and drop a mp3 file</label>
-		<script src='script/plug/three.min.js'></script>
-		<script src='script/plug/keyboard.js'></script>
-		<script src="script/plug/jquery.min.js"></script>
-		<script src="script/plug/OrbitControls.js"></script>
-		<script src="script/plug/OBJLoader.js"></script>
-		<script src="script/plug/MTLLoader.js"></script>
-		<script src="script/plug/FBXLoader.js"></script>
-		<script src='script/plug/Detector.js'></script>
-		<script src="lib/inflate.min.js"></script>
-		<script src="lib/dat.gui.min.js"></script>
-		<script src="script/plug/stats.min.js"></script>
+	<label id="guide" style="position:fixed;color:white; margin:10px;">Drag and drop a mp3 file</label>
+	<script type="x-shader/x-vertex" id="vertexShader">
+            uniform float amplitude;
+            uniform vec3 uCameraPosition;
+            varying vec3 vColor;
 
-		
-		<script src="script/audioProcesssor.js"></script>
-		<!-- <script src="script/modelProcesssor.js"></script> -->
-		<script src="script/fbxLoader.js"></script>
+            void main() {
+                vec3 top = vec3(1.0, 0.0, 0.0);
+                vec3 bottom = vec3(1.0, 1.0, 1.0);
+                vec3 directionalLightColor = vec3(mix(bottom, top, (amplitude / 0.5)));
+                float strength = max(dot(normalize(uCameraPosition), normal), 0.0);
+                vColor = directionalLightColor * strength;
 
-	</body>
+                vec3 newPosition = position + normal * amplitude * random(position.xz);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+            }
+        </script>
+	<script type="x-shader/x-vertex" id="fragmentShader">
+            varying vec3 vColor;
+
+            void main() {
+                gl_FragColor = vec4(vColor, 1.0);
+            }
+        </script>
+	<script src='script/plug/three.min.js'></script>
+	<script src='script/plug/keyboard.js'></script>
+	<script src="script/plug/jquery.min.js"></script>
+	<script src="script/plug/OrbitControls.js"></script>
+	<script src="script/plug/OBJLoader.js"></script>
+	<script src="script/plug/MTLLoader.js"></script>
+	<script src="script/plug/FBXLoader.js"></script>
+	<script src='script/plug/Detector.js'></script>
+	<script src="script/plug/bpm.js"></script>
+	<script src="lib/inflate.min.js"></script>
+	<script src="lib/dat.gui.min.js"></script>
+	<script src="script/plug/stats.min.js"></script>
+
+	<!-- <script src="script/modelProcesssor.js"></script> -->
+	<script src="script/fbxLoader.js"></script>
+</body>
+
 </html>

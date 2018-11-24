@@ -1,0 +1,29 @@
+{
+  "name": "cg_music",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "start": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WangYifang/CG_music.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WangYifang/CG_music/issues"
+  },
+  "homepage": "https://github.com/WangYifang/CG_music#readme",
+  "dependencies": {
+    "rollup": "^0.67.3",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "three": "^0.98.0",
+    "web-audio-beat-detector": "^7.0.8"
+  }
+}
