@@ -1,4 +1,5 @@
 import Audios from './audioProcesssor'
+let actions = []
 let renderer, camera, scene, gui, light, stats, controls, meshHelper, mixer, action;
 var clock = new THREE.Clock();
 
@@ -11,9 +12,6 @@ window.onload = () => {
     initScene();
     initCamera();
     initLight();
-
-
-
 
     // audio things
     const audios = new Audios(scene, renderer, camera, (tempo) => {
@@ -94,16 +92,16 @@ function initLight() {
 
 }
 
-function initModel() {
+async function initModel() {
     //辅助工具
     const helper = new THREE.AxesHelper(50);
     scene.add(helper);
 
     // 地板
-    const mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({ color: 0xffffff, depthWrite: false }));
-    mesh.rotation.x = - Math.PI / 2;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
+    const floor = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({ color: 0xffffff, depthWrite: false }));
+    floor.rotation.x = - Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
     //添加地板割线
     const grid = new THREE.GridHelper(2000, 20, 0x000000, 0x000000);
@@ -112,34 +110,48 @@ function initModel() {
     scene.add(grid);
 
     //加载模型
-    const loader = new THREE.FBXLoader();
-    loader.load("model/fbx/Hip Hop Dancing.fbx", function (mesh) {
-        console.log("mesh:\n", mesh);
-        //添加骨骼辅助
-        meshHelper = new THREE.SkeletonHelper(mesh);
+    await Promise.all([1, 2, 3, 4, 5, 6]
+        .map(index => new Promise((resolve, reject) => {
+            const loader = new THREE.FBXLoader();
+            loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err))
+        })))
+        .then(meshes => {
+            // 1 first mesh
+            const mesh = meshes.shift()
+            console.log("mesh:\n", mesh);
+            //添加骨骼辅助
+            meshHelper = new THREE.SkeletonHelper(mesh);
 
-        // console.log(meshHelper);
-        scene.add(meshHelper);
+            // console.log(meshHelper);
+            scene.add(meshHelper);
 
-        //设置模型的每个部位都可以投影
-        mesh.traverse(function (child) {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
+            //设置模型的每个部位都可以投影
+            mesh.traverse(function (child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
 
-        //AnimationMixer是场景中特定对象的动画播放器。当场景中的多个对象独立动画时，可以为每个对象使用一个AnimationMixer
-        mixer = mesh.mixer = new THREE.AnimationMixer(mesh);
-        console.log(mixer.animations)
-        //mixer.clipAction 返回一个可以控制动画的AnimationAction对象  参数需要一个AnimationClip 对象
-        //AnimationAction.setDuration 设置一个循环所需要的时间，当前设置了一秒
-        //告诉AnimationAction启动该动作
-        action = mixer.clipAction(mesh.animations[0]);
+            //AnimationMixer是场景中特定对象的动画播放器。当场景中的多个对象独立动画时，可以为每个对象使用一个AnimationMixer
+            mixer = mesh.mixer = new THREE.AnimationMixer(mesh);
+            console.log(mixer.animations)
+            //mixer.clipAction 返回一个可以控制动画的AnimationAction对象  参数需要一个AnimationClip 对象
+            //AnimationAction.setDuration 设置一个循环所需要的时间，当前设置了一秒
+            //告诉AnimationAction启动该动作
+            action = mixer.clipAction(mesh.animations[0]);
 
-        action.play();
-        scene.add(mesh);
-    });
+            action.play();
+            actions.push(action)
+            scene.add(mesh);
+
+            actions = actions.concat(meshes.map(m => mixer.clipAction(m.animations[0])))
+            mixer.addEventListener('loop', e => {
+                console.log('finish', e)
+                e.action.stop()
+                actions[Math.round(Math.random() * (actions.length-1))].play()
+            }); // properties of e: type, action and direction
+        })
 }
 
 //初始化性能插件
