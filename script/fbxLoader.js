@@ -4400,10 +4400,6 @@
             // action.setEffectiveTimeScale(tempo * 0.01)
             musicTempo = tempo;
         }, (amplit) => {
-            // console.log('amplit', Math.log(amplit) / 4)
-            if (action) {
-                action.setEffectiveWeight(Math.log(amplit) / 4);
-            }
         });
         initModel();
 
@@ -4533,15 +4529,25 @@
                 actions = actions.concat(meshes.map((m,i) => {
                     const action = mixer.clipAction(m.animations[0]);
                     action._tempo = actionTempos[i];
+                    // action.play()
                     return action
                 }));
                 mixer.addEventListener('loop', e => {
                     console.log('finish', e);
-                    e.action.stop();
-                    action = actions[Math.round(Math.random() * (actions.length-1))];
-                    action.play();
+                    // e.action.stop()
+                    while(action === e.action) {
+                        action = actions[Math.round(Math.random() * (actions.length-1))];
+                    }
+                    
+                    
                     console.log('action._tempo', action._tempo, musicTempo / action._tempo);
+                    action.reset();
+                    action.play();
                     action.setEffectiveTimeScale(musicTempo / action._tempo);
+                    action.setEffectiveWeight(1);
+                    action.crossFadeFrom(e.action, 1, true);
+
+                    // e.action.crossFadeTo(action, 1)
                 }); // properties of e: type, action and direction
             });
     }
