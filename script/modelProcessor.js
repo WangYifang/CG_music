@@ -1,4 +1,5 @@
 loadModel = function (filename) {
+  console.log(filename)
     var loader = new THREE.OBJLoader();
     loader.load(// resource URL
       "model/" + filename, // called when resource is loaded

@@ -13,14 +13,14 @@ var numberOfBars = 60;
 $(document).ready(function () {
     initialize();
     createBars();
-    // loadModel();
+    loadModel();
     setupAudioProcessing();
-    getAudio();
-    handleDrop();  
+    // getAudio();
+    handleDrop();
 });
 
 //initialize 
-initialize = function () {
+function initialize() {
     //generate a ThreeJS Scene
     scene = new THREE.Scene();
 
@@ -66,10 +66,10 @@ initialize = function () {
 
     //Add interation capability to the scene
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-};
+}
 
 //create the bars required to show the visualization
-createBars = function () {
+function createBars() {
 
     //iterate and create bars
     for (var i = 0; i < numberOfBars; i++) {
@@ -86,15 +86,15 @@ createBars = function () {
 
         //create the geometry and set the initial position
         bars[i] = new THREE.Mesh(barGeometry, material);
-        bars[i].position.set(i - numberOfBars/2, 0, 0);
+        bars[i].position.set(i - numberOfBars / 2, 0, 0);
 
         //add the created bar to the scene
         scene.add(bars[i]);
     }
-};
+}
 
 //wyf: load 3D models and material
-loadModel = function () {
+function loadModel() {
     var mtlLoader = new THREE.MTLLoader();
     mtlLoader.setTexturePath("model/robot/");
     mtlLoader.setPath("model/robot/");
@@ -102,24 +102,24 @@ loadModel = function () {
         materials.preload();
         global_material = materials;
 
-
         var objLoader = new THREE.OBJLoader();
         objLoader.setMaterials(materials);
         objLoader.setPath("model/robot/");
         objLoader.load("model.obj", function (object) {
-            object.position.z += 2;
-            scene.add(object);
 
             console.log("mesh: \n", object.children[0].geometry);
 
             // Clear mesh in the scene before loading
-            for (var i = scene.children.length - 1; i >= 0; --i) {
-              if (scene.children[i].type == "Mesh") {
-                scene.remove(scene.children[i]);
-              }
+            for (let i = scene.children.length - 1; i >= 0; --i) {
+                if (scene.children[i].type == "Mesh") {
+                    scene.remove(scene.children[i]);
+                }
             }
 
-            var material = new THREE.MeshBasicMaterial({ color: 0xfffff0 });
+            object.position.z += 2;
+            scene.add(object);
+
+            // var material = new THREE.MeshBasicMaterial({ color: 0xfffff0 });
 
             // var geometry = object.children[0].geometry;
             // geometry.attributes.uv2 = geometry.attributes.uv;
@@ -127,13 +127,12 @@ loadModel = function () {
             // mesh = new THREE.Mesh(geometry, material);
             // mesh.scale.multiplyScalar(25);
             // scene.add(mesh);
-            
 
-            var bufferGeometry = object.children[0].geometry;
-            var geometry = new THREE.Geometry().fromBufferGeometry(bufferGeometry);
-            geometry.normalize();
-            bufferGeometry.fromGeometry(geometry);
-            mesh = new THREE.Mesh(bufferGeometry, material);
+            // var bufferGeometry = object.children[0].geometry;
+            // var geometry = new THREE.Geometry().fromBufferGeometry(bufferGeometry);
+            // geometry.normalize();
+            // bufferGeometry.fromGeometry(geometry);
+            // mesh = new THREE.Mesh(bufferGeometry, material);
             // scene.add(mesh);
 
 
@@ -148,13 +147,6 @@ loadModel = function () {
             //     .textContent
             // });
 
-            // var bufferGeometry = object.children[0].geometry;
-            // var geometry = new THREE.Geometry().fromBufferGeometry(bufferGeometry);
-            // geometry.normalize();
-            // bufferGeometry.fromGeometry(geometry);
-            // mesh = new THREE.Mesh(bufferGeometry, material);
-
-            // scene.add(mesh);
         }, function (xhr) {
             // called when loading is in progresses
             console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
@@ -163,29 +155,9 @@ loadModel = function () {
             console.log("An error happened");
         });
     })
-
-    // objLoader.load("model/" + filename, function (object) {
-    //     console.log("2-scene: ", scene);
-
-    //     geometry = object.children[0].geometry;
-    //     geometry.attributes.uv2 = geometry.attributes.uv;
-    //     geometry.center();
-    //     // mesh = new THREE.Mesh(geometry, materialNormal);
-    //     mesh = new THREE.Mesh(geometry);
-    //     // mesh.scale.multiplyScalar(25);
-    //     scene.add(mesh);
-    //     },
-    //     function (xhr) {
-    //         console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-    //     }, // called when loading has errors
-    //     function (error) {
-    //         console.log("An error happened");
-    //     });
-
-    
 }
 
-setupAudioProcessing = function () {
+function setupAudioProcessing() {
     //get the audio context
     audioContext = new AudioContext();
 
@@ -210,45 +182,51 @@ setupAudioProcessing = function () {
     //connect source to analyser
     sourceBuffer.connect(audioContext.destination);
 
-    var that = this;
-
     //this is where we animates the bars
-    javascriptNode.onaudioprocess = function () {
+    javascriptNode.onaudioprocess = () => {
 
         // get the average for the first channel
-        var array = new Uint8Array(that.analyser.frequencyBinCount);
-        that.analyser.getByteFrequencyData(array);
+        const array = new Uint8Array(this.analyser.frequencyBinCount);
+        this.analyser.getByteFrequencyData(array);
 
         //render the scene and update controls
         renderer.render(scene, camera);
         controls.update();
 
-        var step = Math.round(array.length / numberOfBars);
+        const step = Math.round(array.length / numberOfBars);
 
         //Iterate through the bars and scale the z axis
-        for (var i = 0; i < numberOfBars; i++) {
-            var value = array[i * step] / 4;
-            value = value < 1 ? 1 : value;
+        for (let i = 0; i < numberOfBars; i++) {
+            let value = array[i * step] / 4;
+            value = Math.max(value, 1) //  value < 1 ? 1 : value;
             bars[i].scale.z = value;
         }
     }
-
-};
+}
 
 //get the default audio from the server
-getAudio = function () {
+function getAudio() {
     var request = new XMLHttpRequest();
     request.open("GET", "Asset/Aathi-StarMusiQ.Com.mp3", true);
     request.responseType = "arraybuffer";
     request.send();
-    var that = this;
-    request.onload = function () {
+    request.onload = () => {
         //that.start(request.response);
     }
-};
+}
+
+//util method to get random colors to make stuff interesting
+function getRandomColor() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
 
 //start the audio processing
-start = function (buffer) {
+function start(buffer) {
     audioContext.decodeAudioData(buffer, decodeAudioDataSuccess, decodeAudioDataFailed);
     var that = this;
 
@@ -260,22 +238,12 @@ start = function (buffer) {
     function decodeAudioDataFailed() {
         debugger
     }
-};
+}
 
-//util method to get random colors to make stuff interesting
-getRandomColor = function () {
-    var letters = '0123456789ABCDEF'.split('');
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-};
-
-handleDrop = function () {
+function handleDrop() {
     //drag Enter
     document.body.addEventListener("dragenter", function () {
-       
+
     }, false);
 
     //drag over
@@ -287,7 +255,7 @@ handleDrop = function () {
 
     //drag leave
     document.body.addEventListener("dragleave", function () {
-       
+
     }, false);
 
     //drop
@@ -302,17 +270,17 @@ handleDrop = function () {
 
         $("#guide").text("Playing " + fileName);
 
-        var fileReader = new FileReader();
+        const fileReader = new FileReader();
 
-        fileReader.onload = function (e) {
+        fileReader.onload = (e) => {
             var fileResult = e.target.result;
             start(fileResult);
-        };
+        }
 
-        fileReader.onerror = function (e) {
-          debugger
-        };
-       
+        fileReader.onerror = (e) => {
+            debugger
+        }
+
         fileReader.readAsArrayBuffer(file);
     }, false);
 }
