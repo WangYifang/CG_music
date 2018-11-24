@@ -1,12 +1,13 @@
 import { analyze } from 'web-audio-beat-detector'
 
 export default class Audios {
-    constructor(scene, renderer, camera, onUpdateTempo, onUpdateAmplite) {
+    constructor(scene, renderer, camera, onUpdateTempo, onUpdateAmplite, onDrapMusic) {
         this.scene = scene
         this.renderer = renderer
         this.camera = camera
         this.onUpdateTempo = onUpdateTempo
         this.onUpdateAmplite = onUpdateAmplite
+        this.onDrapMusic = onDrapMusic
         this.bars = new Array()
         this.numberOfBars = 60
         this.createBars()
@@ -137,6 +138,7 @@ export default class Audios {
                 this.tempo = await analyze(decodedBuffer)
                 console.log('music tempo', this.tempo)
                 this.onUpdateTempo(this.tempo)
+                this.onDrapMusic()
                 // .then(tempo => console.log(`No.1 detector ${tempo}`))
 
                 // No2 detcector

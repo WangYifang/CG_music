@@ -23,6 +23,8 @@ window.onload = () => {
         if (action) {
             // action.setEffectiveWeight(Math.log(amplit) / 7)
         }
+    }, () => { 
+        action.play() 
     })
     initModel();
 
@@ -112,11 +114,11 @@ async function initModel() {
     scene.add(grid);
 
     //加载模型
-    const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5]
+    const actionTempos = [103.04, 129.2, 132, 145.5]// [206.4, 258.3, 264.2, 290.9] // [113.7, 105.6, 90.2, 93.9, 101.4, 142.5]
     await Promise.all(actionTempos
         .map(index => new Promise((resolve, reject) => {
             const loader = new THREE.FBXLoader();
-            loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err))
+            loader.load(`model/fbx/sb/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err))
         })))
         .then(meshes => {
             // 1 first mesh
@@ -144,7 +146,7 @@ async function initModel() {
             //告诉AnimationAction启动该动作
             action = mixer.clipAction(mesh.animations[0]);
 
-            action.play();
+            // action.play();
             action._tempo = actionTempos.shift()
             actions.push(action)
             scene.add(mesh);

@@ -4175,12 +4175,13 @@
     URL.revokeObjectURL(url$1);
 
     class Audios {
-        constructor(scene, renderer, camera, onUpdateTempo, onUpdateAmplite) {
+        constructor(scene, renderer, camera, onUpdateTempo, onUpdateAmplite, onDrapMusic) {
             this.scene = scene;
             this.renderer = renderer;
             this.camera = camera;
             this.onUpdateTempo = onUpdateTempo;
             this.onUpdateAmplite = onUpdateAmplite;
+            this.onDrapMusic = onDrapMusic;
             this.bars = new Array();
             this.numberOfBars = 60;
             this.createBars();
@@ -4311,6 +4312,7 @@
                     this.tempo = await analyze(decodedBuffer);
                     console.log('music tempo', this.tempo);
                     this.onUpdateTempo(this.tempo);
+                    this.onDrapMusic();
                     // .then(tempo => console.log(`No.1 detector ${tempo}`))
 
                     // No2 detcector
@@ -4400,6 +4402,8 @@
             // action.setEffectiveTimeScale(tempo * 0.01)
             musicTempo = tempo;
         }, (amplit) => {
+        }, () => { 
+            action.play(); 
         });
         initModel();
 
@@ -4489,11 +4493,11 @@
         scene.add(grid);
 
         //加载模型
-        const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5];
+        const actionTempos = [103.04, 129.2, 132, 145.5];// [206.4, 258.3, 264.2, 290.9] // [113.7, 105.6, 90.2, 93.9, 101.4, 142.5]
         await Promise.all(actionTempos
             .map(index => new Promise((resolve, reject) => {
                 const loader = new THREE.FBXLoader();
-                loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err));
+                loader.load(`model/fbx/sb/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err));
             })))
             .then(meshes => {
                 // 1 first mesh
@@ -4521,7 +4525,7 @@
                 //告诉AnimationAction启动该动作
                 action = mixer.clipAction(mesh.animations[0]);
 
-                action.play();
+                // action.play();
                 action._tempo = actionTempos.shift();
                 actions.push(action);
                 scene.add(mesh);
@@ -4529,7 +4533,6 @@
                 actions = actions.concat(meshes.map((m,i) => {
                     const action = mixer.clipAction(m.animations[0]);
                     action._tempo = actionTempos[i];
-                    // action.play()
                     return action
                 }));
                 mixer.addEventListener('loop', e => {
@@ -4538,7 +4541,6 @@
                     while(action === e.action) {
                         action = actions[Math.round(Math.random() * (actions.length-1))];
                     }
-                    
                     
                     console.log('action._tempo', action._tempo, musicTempo / action._tempo);
                     action.reset();
