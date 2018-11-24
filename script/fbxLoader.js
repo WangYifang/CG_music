@@ -4228,8 +4228,7 @@
             //get the audio context
             this.audioContext = new AudioContext();
 
-            //create the source buffer
-            this.sourceBuffer = this.audioContext.createBufferSource();
+
 
             //create the javascript node
             this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
@@ -4240,13 +4239,8 @@
             this.analyser.fftSize = 512;
 
             // 1.1 for the bar chart
-            this.sourceBuffer.connect(this.analyser);
             this.analyser.connect(this.javascriptNode);
             this.javascriptNode.connect(this.audioContext.destination);
-
-            // 1.2 for playing
-            this.sourceBuffer.connect(this.audioContext.destination);
-
             //this is where we animates the bars
             this.javascriptNode.onaudioprocess = () => {
 
@@ -4298,6 +4292,18 @@
         start(buffer) {
             this.audioContext.decodeAudioData(buffer,
                 async (decodedBuffer) => {
+                    // exit
+                    if(this.sourceBuffer) {
+                        this.sourceBuffer.stop();
+                        this.sourceBuffer.disconnect(this.analyser);
+                        this.sourceBuffer.disconnect(this.audioContext.destination);
+                    }
+                    //create the source buffer
+                    this.sourceBuffer = this.audioContext.createBufferSource();
+
+                    this.sourceBuffer.connect(this.analyser);
+                    // 1.2 for playing
+                    this.sourceBuffer.connect(this.audioContext.destination);
                     this.sourceBuffer.buffer = decodedBuffer;
                     this.sourceBuffer.start(0);
 
@@ -4305,7 +4311,7 @@
                     this.tempo = await analyze(decodedBuffer);
                     console.log('music tempo', this.tempo);
                     this.onUpdateTempo(this.tempo);
-                        // .then(tempo => console.log(`No.1 detector ${tempo}`))
+                    // .then(tempo => console.log(`No.1 detector ${tempo}`))
 
                     // No2 detcector
                     // const audioData = [];
