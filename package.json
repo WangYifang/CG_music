@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/WangYifang/CG_music#readme",
   "dependencies": {
+    "aplayer": "^1.10.1",
     "rollup": "^0.67.3",
     "rollup-plugin-commonjs": "^9.2.0",
     "rollup-plugin-node-resolve": "^3.4.0",

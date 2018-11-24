@@ -19,9 +19,10 @@ window.onload = () => {
         // action.setEffectiveTimeScale(tempo * 0.01)
         musicTempo = tempo
     }, (amplit) => {
-        // console.log('amplit', Math.log(amplit) / 4)
+        // console.log('amplit', amplit)
         if (action) {
             // action.setEffectiveWeight(Math.log(amplit) / 7)
+            action.setEffectiveTimeScale(musicTempo / action._tempo * Math.min(1, Math.max(0.25, amplit / 30)))
         }
     }, () => { 
         action.play() 
@@ -114,11 +115,13 @@ async function initModel() {
     scene.add(grid);
 
     //加载模型
-    const actionTempos = [103.04, 129.2, 132, 145.5]// [206.4, 258.3, 264.2, 290.9] // [113.7, 105.6, 90.2, 93.9, 101.4, 142.5]
+    // [206.4, 258.3, 264.2, 290.9] 
+      //  [103.04, 129.2, 132, 145.5]// 
+    const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5]
     await Promise.all(actionTempos
         .map(index => new Promise((resolve, reject) => {
             const loader = new THREE.FBXLoader();
-            loader.load(`model/fbx/sb/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err))
+            loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err))
         })))
         .then(meshes => {
             // 1 first mesh

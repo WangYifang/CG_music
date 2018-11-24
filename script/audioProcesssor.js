@@ -1,4 +1,6 @@
 import { analyze } from 'web-audio-beat-detector'
+import APlayer from 'aplayer';
+
 
 export default class Audios {
     constructor(scene, renderer, camera, onUpdateTempo, onUpdateAmplite, onDrapMusic) {
@@ -14,6 +16,102 @@ export default class Audios {
         this.setupAudioProcessing()
         this.getAudio()
         this.handleDrop()
+
+        const ap = new APlayer({
+            container: document.getElementById('aplayer'),
+            mini: false,
+            autoplay: false,
+            theme: '#FADFA3',
+            loop: 'all',
+            order: 'random',
+            preload: 'none',
+            volume: 0.7,
+            mutex: true,
+            listFolded: false,
+            listMaxHeight: 90,
+            lrcType: 3,
+            audio: []
+        });
+
+        const musicList = [
+            {
+                name: 'Faded',
+                artist: 'Alan Walker',
+                url: 'music/Alan Walker - Faded.mp3',
+                // cover: 'cover1.jpg',
+                // lrc: 'lrc1.lrc',
+                theme: '#ebd0c2'
+            },
+            {
+                name: 'Yellow',
+                artist: 'Coldplay',
+                url: 'music/Coldplay - Yellow.mp3',
+                // cover: 'cover2.jpg',
+                // lrc: 'lrc2.lrc',
+                theme: '#46718b'
+            },
+            {
+                name: 'Mondo Bongo',
+                artist: 'artist2',
+                url: 'music/mondo-bongo.mp3',
+                // cover: 'cover2.jpg',
+                // lrc: 'lrc2.lrc',
+                theme: '#46718b'
+            }
+        ]
+        for (const music of musicList) {
+            const request = new XMLHttpRequest();
+            request.open('GET', music.url, true);
+            request.responseType = 'blob';
+            request.onload = () => {
+                const blob = request.response;
+                let arrayBuffer;
+                const fileReader = new FileReader();
+                fileReader.onload = (e) => {
+                    arrayBuffer = e.target.result;
+                    // analyze the arrayBuffer
+                    this.audioContext.decodeAudioData(arrayBuffer, function (buffer) {
+                        music.decodedBuffer = buffer
+                    })
+                };
+                fileReader.readAsArrayBuffer(blob);
+
+                // add to list
+                ap.list.add({
+                    ...music,
+                    url: URL.createObjectURL(blob)
+                })
+            };
+            request.send();
+        }
+
+        ap.on('play', async (e) => {
+            console.log(e)
+            console.log(ap.audio)
+            console.log(ap.list)
+            // how to get decode buffer
+
+            // exit
+            if (this.sourceBuffer) {
+                this.sourceBuffer.stop()
+                this.sourceBuffer.disconnect(this.analyser)
+                this.sourceBuffer.disconnect(this.audioContext.destination)
+            }
+            //create the source buffer
+            this.sourceBuffer = this.audioContext.createBufferSource();
+            this.sourceBuffer.connect(this.analyser);
+            // 1.2 for playing
+            this.sourceBuffer.connect(this.audioContext.destination);
+            this.sourceBuffer.buffer = musicList[ap.list.index].decodedBuffer
+            this.sourceBuffer.start(0);
+
+            // No 1 detector
+            this.tempo = await analyze(this.sourceBuffer.buffer)
+            console.log('music tempo', this.tempo)
+            this.onUpdateTempo(this.tempo)
+            this.onDrapMusic()
+            // console.log(e)
+        })
     }
 
     //create the bars required to show the visualization
@@ -54,8 +152,6 @@ export default class Audios {
     setupAudioProcessing() {
         //get the audio context
         this.audioContext = new AudioContext();
-
-
 
         //create the javascript node
         this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
@@ -120,13 +216,13 @@ export default class Audios {
         this.audioContext.decodeAudioData(buffer,
             async (decodedBuffer) => {
                 // exit
-                if(this.sourceBuffer) {
+                if (this.sourceBuffer) {
                     this.sourceBuffer.stop()
                     this.sourceBuffer.disconnect(this.analyser)
                     this.sourceBuffer.disconnect(this.audioContext.destination)
                 }
                 //create the source buffer
-                this.sourceBuffer = this.audioContext.createBufferSource();
+                this.sourceBuffer = this.audioContext.createMediaElementSource(ap.audio);
 
                 this.sourceBuffer.connect(this.analyser);
                 // 1.2 for playing
