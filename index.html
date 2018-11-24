@@ -7,8 +7,9 @@
 		<link href="css/style.css" type="text/css" rel="stylesheet"/>
 
 	</head>
-	<body>
-
+	
+	<body onload="draw();">
+	<!-- <body> -->
 		<label id="guide" style="position:fixed;color:white; margin:10px;">Drag and drop a mp3 file</label>
 		<script src='script/plug/three.min.js'></script>
 		<script src='script/plug/keyboard.js'></script>
@@ -16,8 +17,16 @@
 		<script src="script/plug/OrbitControls.js"></script>
 		<script src="script/plug/OBJLoader.js"></script>
 		<script src="script/plug/MTLLoader.js"></script>
+		<script src="script/plug/FBXLoader.js"></script>
+		<script src='script/plug/Detector.js'></script>
+		<script src="lib/inflate.min.js"></script>
+		<script src="lib/dat.gui.min.js"></script>
+		<script src="script/plug/stats.min.js"></script>
+
+		
 		<script src="script/audioProcesssor.js"></script>
-		<script src="script/modelProcesssor.js"></script>
+		<!-- <script src="script/modelProcesssor.js"></script> -->
+		<script src="script/fbxLoader.js"></script>
 
 	</body>
 </html>

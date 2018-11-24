@@ -11,12 +11,13 @@ var bars = new Array();
 var numberOfBars = 60;
 
 $(document).ready(function () {
-    initialize();
-    createBars();
-    loadModel();
-    setupAudioProcessing();
+    // initialize();
+    // createBars();
+    // loadModel();
+    // setupAudioProcessing();
     // getAudio();
-    handleDrop();
+    // handleDrop();  
+    // draw();
 });
 
 //initialize 
@@ -75,18 +76,28 @@ function createBars() {
     for (var i = 0; i < numberOfBars; i++) {
 
         //create a bar
-        var barGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        var barGeometry = new THREE.BoxGeometry(3, 3, 3);
 
         //create a material
         var material = new THREE.MeshPhongMaterial({
-            color: getRandomColor(),
+            // color: getRandomColor(),
+            color: 0xF9F8ED,
+            shading: THREE.FlatShading,
             ambient: 0x808080,
             specular: 0xffffff
         });
 
         //create the geometry and set the initial position
         bars[i] = new THREE.Mesh(barGeometry, material);
-        bars[i].position.set(i - numberOfBars / 2, 0, 0);
+
+        //wyf: 这边希望改成所有的bar围绕成一个圆形（在地板平面上）
+        bars[i].position.set(-100, 0, ((60-i) - numberOfBars / 2) * 6);
+
+        // Enable shadow.
+        bars[i].castShadow = true;
+        bars[i].receiveShadow = false;
+
+        // bars[i].position.set(i - numberOfBars / 2, 0, 0);
 
         //add the created bar to the scene
         scene.add(bars[i]);
@@ -196,10 +207,10 @@ function setupAudioProcessing() {
         const step = Math.round(array.length / numberOfBars);
 
         //Iterate through the bars and scale the z axis
-        for (let i = 0; i < numberOfBars; i++) {
-            let value = array[i * step] / 4;
-            value = Math.max(value, 1) //  value < 1 ? 1 : value;
-            bars[i].scale.z = value;
+        for (var i = 0; i < numberOfBars; i++) {
+            var value = array[i * step] / 4;
+            value = Math.max(value, 1)
+            bars[i].scale.y = value;
         }
     }
 }
