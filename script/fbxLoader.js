@@ -4383,6 +4383,7 @@
     let actions = [];
     let renderer, camera, scene, gui, light, stats, controls, meshHelper, mixer, action;
     var clock = new THREE.Clock();
+    let musicTempo = 1;
 
     window.onload = () => {
         //兼容性判断
@@ -4396,9 +4397,10 @@
 
         // audio things
         const audios = new Audios(scene, renderer, camera, (tempo) => {
-            action.setEffectiveTimeScale(tempo * 0.01);
+            // action.setEffectiveTimeScale(tempo * 0.01)
+            musicTempo = tempo;
         }, (amplit) => {
-            console.log('amplit', Math.log(amplit) / 3);
+            // console.log('amplit', Math.log(amplit) / 4)
             if (action) {
                 action.setEffectiveWeight(Math.log(amplit) / 4);
             }
@@ -4491,7 +4493,8 @@
         scene.add(grid);
 
         //加载模型
-        await Promise.all([1, 2, 3, 4, 5, 6]
+        const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5];
+        await Promise.all(actionTempos
             .map(index => new Promise((resolve, reject) => {
                 const loader = new THREE.FBXLoader();
                 loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err));
@@ -4523,14 +4526,22 @@
                 action = mixer.clipAction(mesh.animations[0]);
 
                 action.play();
+                action._tempo = actionTempos.shift();
                 actions.push(action);
                 scene.add(mesh);
 
-                actions = actions.concat(meshes.map(m => mixer.clipAction(m.animations[0])));
+                actions = actions.concat(meshes.map((m,i) => {
+                    const action = mixer.clipAction(m.animations[0]);
+                    action._tempo = actionTempos[i];
+                    return action
+                }));
                 mixer.addEventListener('loop', e => {
                     console.log('finish', e);
                     e.action.stop();
-                    actions[Math.round(Math.random() * (actions.length-1))].play();
+                    action = actions[Math.round(Math.random() * (actions.length-1))];
+                    action.play();
+                    console.log('action._tempo', action._tempo, musicTempo / action._tempo);
+                    action.setEffectiveTimeScale(musicTempo / action._tempo);
                 }); // properties of e: type, action and direction
             });
     }
