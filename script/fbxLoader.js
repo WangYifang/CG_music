@@ -4567,6 +4567,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(0xeeeeee);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         //告诉渲染器需要阴影效果
         document.body.appendChild(renderer.domElement);
     }
@@ -4616,10 +4617,12 @@
         light.position.set(0, 400, 200);
 
         light.castShadow = true;
-        light.shadow.camera.top = 180;
-        light.shadow.camera.bottom = -100;
-        light.shadow.camera.left = -120;
-        light.shadow.camera.right = 120;
+        light.shadow.camera.top = 180*10;
+        light.shadow.camera.bottom = -100*10;
+        light.shadow.camera.left = -120*10;
+        light.shadow.camera.right = 120*10;
+        light.shadowMapHeight = 1024;
+        light.shadowMapWidth = 1024;
 
         //告诉平行光需要开启阴影投射
         light.castShadow = true;
