@@ -28,11 +28,10 @@ window.onload = () => {
             action.forEach(a => {
                 if (currentMusic === 3) {
                     a.setEffectiveTimeScale(musicTempo / a._tempo * Math.min(1.25, Math.max(0.25, amplit / 20)))
-                } else if (currentMusic !== 2) {
+                } else if (!new Set([2, 5, 6]).has(currentMusic)) {
                     a.setEffectiveTimeScale(musicTempo / a._tempo * Math.min(1, Math.max(0.25, amplit / 30)))
                 }
             })
-
         }
     }, (currentMusicIndex) => {
         const preAction = action
@@ -40,7 +39,7 @@ window.onload = () => {
 
         // e.action.stop()
         while (action === preAction) {
-            if (currentMusic === 2) {// samba
+            if (new Set([2, 5, 6]).has(currentMusic)) {// samba
                 action = actions[(actions.length - 5) + Math.round(Math.random() * 4)]
             } else {
                 action = actions[Math.round(Math.random() * (actions.length - 5))]
@@ -122,10 +121,12 @@ function initLight() {
     light.position.set(0, 400, 200);
 
     light.castShadow = true;
-    light.shadow.camera.top = 180;
-    light.shadow.camera.bottom = -100;
-    light.shadow.camera.left = -120;
-    light.shadow.camera.right = 120;
+    light.shadow.camera.top = 180 * 10;
+    light.shadow.camera.bottom = -100 * 10;
+    light.shadow.camera.left = -120 * 10;
+    light.shadow.camera.right = 120 * 10;
+    light.shadowMapHeight = 1024
+    light.shadowMapWidth = 1024
 
     //告诉平行光需要开启阴影投射
     light.castShadow = true;
@@ -268,7 +269,7 @@ async function initModel() {
 
                         // random pick
                         while (action === preAction) {
-                            if (currentMusic === 2) {// samba
+                            if (new Set([2, 5, 6]).has(currentMusic)) {// samba
                                 action = actions[(actions.length - 5) + Math.round(Math.random() * 4)]
                             } else {
                                 action = actions[Math.round(Math.random() * (actions.length - 5))]

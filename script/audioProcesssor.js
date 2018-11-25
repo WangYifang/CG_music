@@ -63,6 +63,24 @@ export default class Audios {
                 artist: '三无',
                 url:'music/三无MarBlue - 普通DISCO.mp3',
                 theme: '#46718b',
+            },
+            {
+                name: 'E=MC2',
+                artist: 'J Dilla',
+                url:'music/J Dilla - E=MC2 feat. Common.mp3',
+                theme: '#46718b',
+            },
+            {
+                name: 'Fly Love',
+                artist: 'Jamie Fox',
+                url:'music/Jamie Foxx-Fly Love.mp3',
+                theme: '#46718b',
+            },
+            {
+                name: 'Take You To Rio',
+                artist: 'Ester Dean',
+                url:'music/Ester Dean-Take You To Rio.mp3',
+                theme: '#46718b',
             }
         ]
         for (const music of musicList) {
