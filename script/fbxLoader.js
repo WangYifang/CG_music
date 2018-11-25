@@ -4245,6 +4245,12 @@
                     // cover: 'cover2.jpg',
                     // lrc: 'lrc2.lrc',
                     theme: '#46718b'
+                }, 
+                {
+                    name: '普通Disco',
+                    artist: '三无',
+                    url:'music/三无MarBlue - 普通DISCO.mp3',
+                    theme: '#46718b',
                 }
             ];
             for (const music of musicList) {
@@ -4273,13 +4279,7 @@
                 request.send();
             }
 
-
             ap.on('play', async (e) => {
-                console.log(e);
-                console.log(ap.audio);
-                console.log(ap.list);
-                // how to get decode buffer
-
                 // exit
                 if (this.sourceBuffer) {
                     this.sourceBuffer.stop();
@@ -4298,7 +4298,7 @@
                 this.tempo = await analyze(this.sourceBuffer.buffer);
                 console.log('music tempo', this.tempo);
                 this.onUpdateTempo(this.tempo);
-                this.onDrapMusic();
+                this.onDrapMusic(ap.list.index);
                 // console.log(e)
             });
         }
@@ -4314,10 +4314,10 @@
 
                 //create a material
                 const material = new THREE.MeshPhongMaterial({
-                    // color: getRandomColor(),
+                    // color: this.getRandomColor(),
                     color: 0xF9F8ED,
-                    shading: THREE.FlatShading,
-                    ambient: 0x808080,
+                    flatShading: THREE.FlatShading,
+                    // ambient: 0x808080,
                     specular: 0xffffff
                 });
 
@@ -4494,9 +4494,14 @@
     }
 
     let actions = [];
-    let renderer, camera, scene, gui, light, stats, controls, meshHelper, mixer, action;
+    let action = [];
+    let mixers = [];
+    let doneMixer = 0;
+    let meshHelpers = [];
+    let renderer, camera, scene, gui, light, stats, controls;
     var clock = new THREE.Clock();
     let musicTempo = 1;
+    let currentMusic = 0;
 
     window.onload = () => {
         //兼容性判断
@@ -4513,13 +4518,39 @@
             // action.setEffectiveTimeScale(tempo * 0.01)
             musicTempo = tempo;
         }, (amplit) => {
-            // console.log('amplit', amplit)
             if (action) {
-                // action.setEffectiveWeight(Math.log(amplit) / 7)
-                action.setEffectiveTimeScale(musicTempo / action._tempo * Math.min(1, Math.max(0.25, amplit / 30)));
+                action.forEach(a => {
+                    if (currentMusic === 3) {
+                        a.setEffectiveTimeScale(musicTempo / a._tempo * Math.min(1.25, Math.max(0.25, amplit / 20)));
+                    } else if (currentMusic !== 2) {
+                        a.setEffectiveTimeScale(musicTempo / a._tempo * Math.min(1, Math.max(0.25, amplit / 30)));
+                    }
+                });
+
             }
-        }, () => { 
-            action.play(); 
+        }, (currentMusicIndex) => {
+            const preAction = action;
+            currentMusic = currentMusicIndex;
+
+            // e.action.stop()
+            while (action === preAction) {
+                if (currentMusic === 2) {// samba
+                    action = actions[(actions.length - 4) + Math.round(Math.random() * 3)];
+                } else {
+                    action = actions[Math.round(Math.random() * (actions.length - 4))];
+                }
+            }
+
+            action.forEach((a, i) => {
+                a.reset();
+                a.play();
+                a.setEffectiveTimeScale(musicTempo / a._tempo);
+                a.setEffectiveWeight(1);
+                if (preAction[i]) {
+                    a.crossFadeFrom(preAction[i], 1, true);
+                }
+            });
+
         });
         initModel();
 
@@ -4542,13 +4573,13 @@
 
     function initCamera() {
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.set(300, 200, 400);
+        camera.position.set(500, 400, 600);
     }
 
     function initScene() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xa0a0a0);
-        scene.fog = new THREE.Fog(0xa0a0a0, 200, 1000);
+        scene.fog = new THREE.Fog(0xa0a0a0, 500, 1500);
     }
 
     //初始化dat.GUI简化试验流程
@@ -4562,22 +4593,27 @@
         //将设置属性添加到gui当中，gui.add(对象，属性，最小值，最大值）
         datGui.add(gui, "animation").onChange(function (e) {
             if (e) {
-                action.play();
-            }
-            else {
-                action.stop();
+                action.forEach(a => {
+                    a.play();
+                });
+            } else {
+                action.forEach(a => {
+                    a.stop();
+                });
             }
         });
 
         datGui.add(gui, "helper").onChange(function (e) {
-            meshHelper.visible = e;
+            meshHelpers.forEach(meshHelper => {
+                meshHelper.visible = e;
+            });
         });
     }
 
     function initLight() {
         scene.add(new THREE.AmbientLight(0x444444));
         light = new THREE.DirectionalLight(0xffffff);
-        light.position.set(0, 200, 100);
+        light.position.set(0, 400, 200);
 
         light.castShadow = true;
         light.shadow.camera.top = 180;
@@ -4589,6 +4625,54 @@
         light.castShadow = true;
         scene.add(light);
 
+    }
+
+    function cloneFbx(fbx) {
+        const clone = fbx.clone(true);
+        clone.animations = [...fbx.animations];
+        // console.log(fbx.skeleton.getBoneByName)
+        // clone.skeleton = { bones: [] }
+
+        const skinnedMeshes = {};
+        fbx.traverse(node => {
+            if (node.isSkinnedMesh) {
+                skinnedMeshes[node.name] = node;
+            }
+        });
+
+        const cloneBones = {};
+        const cloneSkinnedMeshes = {};
+        clone.traverse(node => {
+            if (node.isBone) {
+                cloneBones[node.name] = node;
+            }
+
+            if (node.isSkinnedMesh) {
+                cloneSkinnedMeshes[node.name] = node;
+            }
+        });
+
+        for (let name in skinnedMeshes) {
+            const skinnedMesh = skinnedMeshes[name];
+            const skeleton = skinnedMesh.skeleton;
+            const cloneSkinnedMesh = cloneSkinnedMeshes[name];
+
+            const orderedCloneBones = [];
+            for (let i = 0; i < skeleton.bones.length; i++) {
+                const cloneBone = cloneBones[skeleton.bones[i].name];
+                orderedCloneBones.push(cloneBone);
+            }
+
+            cloneSkinnedMesh.bind(
+                new THREE.Skeleton(orderedCloneBones, skeleton.boneInverses),
+                cloneSkinnedMesh.matrixWorld);
+
+            // For animation to work correctly:
+            // clone.skeleton.bones.push(cloneSkinnedMesh)
+            // clone.skeleton.bones.push(...orderedCloneBones)
+        }
+
+        return clone
     }
 
     async function initModel() {
@@ -4610,21 +4694,21 @@
 
         //加载模型
         // [206.4, 258.3, 264.2, 290.9] 
-          //  [103.04, 129.2, 132, 145.5]// 
-        const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5];
+        //  [103.04, 129.2, 132, 145.5]// 
+        const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5, 103.04, 129.2, 132, 145.5];
         await Promise.all(actionTempos
             .map(index => new Promise((resolve, reject) => {
                 const loader = new THREE.FBXLoader();
-                loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), ()=> {}, err => reject(err));
+                loader.load(`model/fbx/${index}.fbx`, mesh => resolve(mesh), () => { }, err => reject(err));
             })))
             .then(meshes => {
                 // 1 first mesh
                 const mesh = meshes.shift();
+                mesh.animations = [mesh.animations[0], ...meshes.map(m => m.animations[0])];
                 console.log("mesh:\n", mesh);
                 //添加骨骼辅助
-                meshHelper = new THREE.SkeletonHelper(mesh);
-
-                // console.log(meshHelper);
+                const meshHelper = new THREE.SkeletonHelper(mesh);
+                meshHelpers.push(meshHelper);
                 scene.add(meshHelper);
 
                 //设置模型的每个部位都可以投影
@@ -4634,41 +4718,67 @@
                         child.receiveShadow = true;
                     }
                 });
-
-                //AnimationMixer是场景中特定对象的动画播放器。当场景中的多个对象独立动画时，可以为每个对象使用一个AnimationMixer
-                mixer = mesh.mixer = new THREE.AnimationMixer(mesh);
-                console.log(mixer.animations);
-                //mixer.clipAction 返回一个可以控制动画的AnimationAction对象  参数需要一个AnimationClip 对象
-                //AnimationAction.setDuration 设置一个循环所需要的时间，当前设置了一秒
-                //告诉AnimationAction启动该动作
-                action = mixer.clipAction(mesh.animations[0]);
-
-                // action.play();
-                action._tempo = actionTempos.shift();
-                actions.push(action);
                 scene.add(mesh);
 
-                actions = actions.concat(meshes.map((m,i) => {
-                    const action = mixer.clipAction(m.animations[0]);
+                //AnimationMixer是场景中特定对象的动画播放器。当场景中的多个对象独立动画时，可以为每个对象使用一个AnimationMixer
+                mesh.mixer = new THREE.AnimationMixer(mesh);
+                mixers.push(mesh.mixer);
+                actions = mesh.animations.map((a, i) => {
+                    const action = mesh.mixer.clipAction(a);
                     action._tempo = actionTempos[i];
-                    return action
-                }));
-                mixer.addEventListener('loop', e => {
-                    console.log('finish', e);
-                    // e.action.stop()
-                    while(action === e.action) {
-                        action = actions[Math.round(Math.random() * (actions.length-1))];
-                    }
-                    
-                    console.log('action._tempo', action._tempo, musicTempo / action._tempo);
-                    action.reset();
-                    action.play();
-                    action.setEffectiveTimeScale(musicTempo / action._tempo);
-                    action.setEffectiveWeight(1);
-                    action.crossFadeFrom(e.action, 1, true);
+                    return [action]
+                });
+                action = actions[0];
 
-                    // e.action.crossFadeTo(action, 1)
-                }); // properties of e: type, action and direction
+                for(let i = 0; i < 5; ++i) {
+                    const cloneMesh = cloneFbx(mesh);
+                    cloneMesh.position.set(70 * (i+1), 0, i % 2 ? 0 : 150);
+                    scene.add(cloneMesh);
+        
+                    //添加骨骼辅助
+                    const meshHelper = new THREE.SkeletonHelper(cloneMesh);
+                    scene.add(meshHelper);
+                    meshHelpers.push(meshHelper);
+                    // mixer
+                    cloneMesh.mixer = new THREE.AnimationMixer(cloneMesh);
+                    mixers.push(cloneMesh.mixer);
+        
+                    cloneMesh.animations.forEach((a, i) => {
+                        const action = cloneMesh.mixer.clipAction(a);
+                        action._tempo = actionTempos[i];
+                        actions[i].push(action);
+                    });
+                }
+
+                // for chain
+                mixers.forEach(mixer => {
+                    mesh.mixer.addEventListener('loop', e => {
+                        doneMixer += 1;
+                        if(doneMixer === mixers.length) {
+                            doneMixer = 0;
+                            // stop all action
+                            const preAction = action;
+                            // preAction.forEach(a => a.stop())
+
+                            // random pick
+                            while (action === preAction) {
+                                if (currentMusic === 2) {// samba
+                                    action = actions[(actions.length - 4) + Math.round(Math.random() * 3)];
+                                } else {
+                                    action = actions[Math.round(Math.random() * (actions.length - 4))];
+                                }
+                            }
+        
+                            action.forEach((a, i) => {
+                                a.reset();
+                                a.play();
+                                a.setEffectiveTimeScale(musicTempo / a._tempo);
+                                a.setEffectiveWeight(1);
+                                a.crossFadeFrom(preAction[i], 1, true);
+                            });
+                        }
+                    }); // properties of e: type, action and direction
+                });
             });
     }
 
@@ -4699,7 +4809,7 @@
         controls.enableZoom = true;
 
         //是否自动旋转
-        controls.autoRotate = false;
+        controls.autoRotate = true;
         controls.autoRotateSpeed = 0.5;
 
         //设置相机距离原点的最远距离
@@ -4714,9 +4824,12 @@
 
     function render$1() {
         var time = clock.getDelta();
-        if (mixer) {
-            mixer.update(time);
-        }
+        mixers.forEach(mixer => {
+            if (mixer) {
+                mixer.update(time);
+            }
+        });
+
         controls.update();
     }
 

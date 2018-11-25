@@ -57,6 +57,12 @@ export default class Audios {
                 // cover: 'cover2.jpg',
                 // lrc: 'lrc2.lrc',
                 theme: '#46718b'
+            }, 
+            {
+                name: '普通Disco',
+                artist: '三无',
+                url:'music/三无MarBlue - 普通DISCO.mp3',
+                theme: '#46718b',
             }
         ]
         for (const music of musicList) {
@@ -86,11 +92,6 @@ export default class Audios {
         }
 
         ap.on('play', async (e) => {
-            console.log(e)
-            console.log(ap.audio)
-            console.log(ap.list)
-            // how to get decode buffer
-
             // exit
             if (this.sourceBuffer) {
                 this.sourceBuffer.stop()
@@ -109,7 +110,7 @@ export default class Audios {
             this.tempo = await analyze(this.sourceBuffer.buffer)
             console.log('music tempo', this.tempo)
             this.onUpdateTempo(this.tempo)
-            this.onDrapMusic()
+            this.onDrapMusic(ap.list.index)
             // console.log(e)
         })
     }
@@ -125,10 +126,10 @@ export default class Audios {
 
             //create a material
             const material = new THREE.MeshPhongMaterial({
-                // color: getRandomColor(),
+                // color: this.getRandomColor(),
                 color: 0xF9F8ED,
-                shading: THREE.FlatShading,
-                ambient: 0x808080,
+                flatShading: THREE.FlatShading,
+                // ambient: 0x808080,
                 specular: 0xffffff
             });
 
