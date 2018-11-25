@@ -41,9 +41,9 @@ window.onload = () => {
         // e.action.stop()
         while (action === preAction) {
             if (currentMusic === 2) {// samba
-                action = actions[(actions.length - 4) + Math.round(Math.random() * 3)]
+                action = actions[(actions.length - 5) + Math.round(Math.random() * 4)]
             } else {
-                action = actions[Math.round(Math.random() * (actions.length - 4))]
+                action = actions[Math.round(Math.random() * (actions.length - 5))]
             }
         }
 
@@ -201,7 +201,7 @@ async function initModel() {
     //加载模型
     // [206.4, 258.3, 264.2, 290.9] 
     //  [103.04, 129.2, 132, 145.5]// 
-    const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5, 103.04, 129.2, 132, 145.5]
+    const actionTempos = [113.7, 105.6, 90.2, 93.9, 101.4, 142.5, 103.04, 129.2, 132, 145.5, 105.5]
     await Promise.all(actionTempos
         .map(index => new Promise((resolve, reject) => {
             const loader = new THREE.FBXLoader();
@@ -269,9 +269,9 @@ async function initModel() {
                         // random pick
                         while (action === preAction) {
                             if (currentMusic === 2) {// samba
-                                action = actions[(actions.length - 4) + Math.round(Math.random() * 3)]
+                                action = actions[(actions.length - 5) + Math.round(Math.random() * 4)]
                             } else {
-                                action = actions[Math.round(Math.random() * (actions.length - 4))]
+                                action = actions[Math.round(Math.random() * (actions.length - 5))]
                             }
                         }
     
